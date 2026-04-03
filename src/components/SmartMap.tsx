@@ -79,7 +79,7 @@ interface SmartMapProps {
 }
 
 const SmartMap: React.FC<SmartMapProps> = ({ route, allNodes }) => {
-  const center: [number, number] = [11.590, 37.388];
+  const center: [number, number] = [11.5870, 37.3880];
   const allEdgesWithTraffic = computeEdgeTraffic(BAHIR_DAR_EDGES);
 
   // Deduplicate edges (only show one direction)
@@ -97,7 +97,7 @@ const SmartMap: React.FC<SmartMapProps> = ({ route, allNodes }) => {
     <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
       <MapContainer
         center={center}
-        zoom={14}
+        zoom={13}
         scrollWheelZoom={true}
         zoomControl={true}
         style={{ height: '100%', width: '100%' }}
