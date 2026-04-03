@@ -31,13 +31,18 @@ const createNodeIcon = (isRouteNode: boolean, isStart: boolean, isEnd: boolean) 
 const MapInitializer: React.FC = () => {
   const map = useMap();
   useEffect(() => {
-    const timer1 = setTimeout(() => map.invalidateSize(), 100);
-    const timer2 = setTimeout(() => map.invalidateSize(), 300);
-    const timer3 = setTimeout(() => map.invalidateSize(), 800);
+    const container = map.getContainer();
+    const observer = new ResizeObserver(() => {
+      map.invalidateSize();
+    });
+    observer.observe(container);
+    // Also fire on mount with delays
+    const t1 = setTimeout(() => map.invalidateSize(), 100);
+    const t2 = setTimeout(() => map.invalidateSize(), 500);
     return () => {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-      clearTimeout(timer3);
+      observer.disconnect();
+      clearTimeout(t1);
+      clearTimeout(t2);
     };
   }, [map]);
   return null;
