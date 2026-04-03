@@ -97,30 +97,12 @@ const TrafficDashboard: React.FC = () => {
                 <div className="space-y-3">
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Origin</label>
-                    <select
-                      value={start}
-                      onChange={(e) => setStart(e.target.value)}
-                      className="w-full bg-secondary border border-border rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary focus:outline-none transition-all"
-                    >
-                      <option value="">Select origin...</option>
-                      {BAHIR_DAR_NODES.map(node => (
-                        <option key={node.id} value={node.id}>{node.name}</option>
-                      ))}
-                    </select>
+                    <LocationCombobox value={start} onChange={setStart} placeholder="Type or select origin..." />
                   </div>
 
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Destination</label>
-                    <select
-                      value={destination}
-                      onChange={(e) => setDestination(e.target.value)}
-                      className="w-full bg-secondary border border-border rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary focus:outline-none transition-all"
-                    >
-                      <option value="">Select destination...</option>
-                      {BAHIR_DAR_NODES.map(node => (
-                        <option key={node.id} value={node.id}>{node.name}</option>
-                      ))}
-                    </select>
+                    <LocationCombobox value={destination} onChange={setDestination} placeholder="Type or select destination..." />
                   </div>
 
                   <button
