@@ -39,6 +39,11 @@ export default {
           DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",
         },
+        traffic: {
+          low: "hsl(var(--traffic-low))",
+          medium: "hsl(var(--traffic-medium))",
+          high: "hsl(var(--traffic-high))",
+        },
         popover: {
           DEFAULT: "hsl(var(--popover))",
           foreground: "hsl(var(--popover-foreground))",
