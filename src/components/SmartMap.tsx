@@ -31,9 +31,14 @@ const createNodeIcon = (isRouteNode: boolean, isStart: boolean, isEnd: boolean) 
 const MapInitializer: React.FC = () => {
   const map = useMap();
   useEffect(() => {
-    setTimeout(() => {
-      map.invalidateSize();
-    }, 100);
+    const timer1 = setTimeout(() => map.invalidateSize(), 100);
+    const timer2 = setTimeout(() => map.invalidateSize(), 300);
+    const timer3 = setTimeout(() => map.invalidateSize(), 800);
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+      clearTimeout(timer3);
+    };
   }, [map]);
   return null;
 };
