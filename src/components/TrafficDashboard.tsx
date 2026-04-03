@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { MapPin, Navigation, Clock, Activity, Info, Eye, LayoutDashboard, Zap } from 'lucide-react';
+import LocationCombobox from './LocationCombobox';
 import { BAHIR_DAR_NODES, BAHIR_DAR_EDGES } from '../data/bahirdar-graph';
 import { dijkstra } from '../lib/dijkstra';
 import { RouteResult } from '../types/index';
