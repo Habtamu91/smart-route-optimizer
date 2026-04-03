@@ -1,9 +1,10 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Polyline, Tooltip, useMap } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { Node, RouteResult, EdgeWithTraffic } from '../types/index';
 import { BAHIR_DAR_EDGES } from '../data/bahirdar-graph';
-import { computeEdgeTraffic, getTrafficColor, getTrafficLevel } from '../lib/dijkstra';
+import { computeEdgeTraffic, getTrafficColor } from '../lib/dijkstra';
 
 const createNodeIcon = (isRouteNode: boolean, isStart: boolean, isEnd: boolean) => {
   let color = '#475569';
@@ -28,12 +29,32 @@ const createNodeIcon = (isRouteNode: boolean, isStart: boolean, isEnd: boolean) 
   });
 };
 
+const MapInitializer: React.FC = () => {
+  const map = useMap();
+  useEffect(() => {
+    const container = map.getContainer();
+    const observer = new ResizeObserver(() => {
+      map.invalidateSize();
+    });
+    observer.observe(container);
+    // Also fire on mount with delays
+    const t1 = setTimeout(() => map.invalidateSize(), 100);
+    const t2 = setTimeout(() => map.invalidateSize(), 500);
+    return () => {
+      observer.disconnect();
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [map]);
+  return null;
+};
+
 const RouteBounds: React.FC<{ route: RouteResult | null }> = ({ route }) => {
   const map = useMap();
   useEffect(() => {
     if (route && route.path.length > 0) {
       const bounds = L.latLngBounds(route.path.map(n => [n.lat, n.lng]));
-      map.fitBounds(bounds, { padding: [60, 60], maxZoom: 15 });
+      map.fitBounds(bounds, { padding: [80, 80], maxZoom: 15 });
     }
   }, [route, map]);
   return null;
@@ -73,7 +94,7 @@ const SmartMap: React.FC<SmartMapProps> = ({ route, allNodes }) => {
   const routeNodeIds = new Set(route?.path.map(n => n.id) || []);
 
   return (
-    <div className="w-full h-full relative">
+    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
       <MapContainer
         center={center}
         zoom={14}
@@ -81,6 +102,7 @@ const SmartMap: React.FC<SmartMapProps> = ({ route, allNodes }) => {
         zoomControl={true}
         style={{ height: '100%', width: '100%' }}
       >
+        <MapInitializer />
         <TileLayer
           url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'

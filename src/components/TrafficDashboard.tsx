@@ -79,7 +79,7 @@ const TrafficDashboard: React.FC = () => {
         </div>
       </header>
 
-      <main className="flex-1 flex flex-col md:flex-row overflow-hidden relative">
+      <main className="flex-1 flex flex-col md:flex-row overflow-hidden relative min-h-0">
         {/* Sidebar */}
         <aside className="w-full md:w-[380px] bg-card border-r border-border flex flex-col overflow-y-auto z-20">
           {activeTab === 'routing' ? (
@@ -276,7 +276,7 @@ const TrafficDashboard: React.FC = () => {
         </aside>
 
         {/* Map */}
-        <section className="flex-1 relative">
+        <section className="flex-1 relative min-h-0 overflow-hidden">
           <SmartMap route={route} allNodes={BAHIR_DAR_NODES} />
 
           {/* Map legend */}
