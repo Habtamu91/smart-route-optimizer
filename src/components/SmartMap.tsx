@@ -28,12 +28,22 @@ const createNodeIcon = (isRouteNode: boolean, isStart: boolean, isEnd: boolean) 
   });
 };
 
+const MapInitializer: React.FC = () => {
+  const map = useMap();
+  useEffect(() => {
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 100);
+  }, [map]);
+  return null;
+};
+
 const RouteBounds: React.FC<{ route: RouteResult | null }> = ({ route }) => {
   const map = useMap();
   useEffect(() => {
     if (route && route.path.length > 0) {
       const bounds = L.latLngBounds(route.path.map(n => [n.lat, n.lng]));
-      map.fitBounds(bounds, { padding: [60, 60], maxZoom: 15 });
+      map.fitBounds(bounds, { padding: [80, 80], maxZoom: 15 });
     }
   }, [route, map]);
   return null;
