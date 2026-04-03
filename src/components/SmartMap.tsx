@@ -7,13 +7,13 @@ import { BAHIR_DAR_EDGES } from '../data/bahirdar-graph';
 import { computeEdgeTraffic, getTrafficColor } from '../lib/dijkstra';
 
 const createNodeIcon = (isRouteNode: boolean, isStart: boolean, isEnd: boolean) => {
-  let color = '#475569';
+  let color = '#64748b';
   let size = 8;
-  let border = '#1e293b';
+  let border = '#94a3b8';
 
-  if (isStart) { color = '#3b82f6'; size = 14; border = '#1d4ed8'; }
-  else if (isEnd) { color = '#ef4444'; size = 14; border = '#b91c1c'; }
-  else if (isRouteNode) { color = '#60a5fa'; size = 10; border = '#3b82f6'; }
+  if (isStart) { color = '#2563eb'; size = 14; border = '#1d4ed8'; }
+  else if (isEnd) { color = '#dc2626'; size = 14; border = '#b91c1c'; }
+  else if (isRouteNode) { color = '#3b82f6'; size = 10; border = '#2563eb'; }
 
   return L.divIcon({
     className: '',
@@ -22,7 +22,7 @@ const createNodeIcon = (isRouteNode: boolean, isStart: boolean, isEnd: boolean) 
       background:${color};
       border:2px solid ${border};
       border-radius:50%;
-      box-shadow:0 0 ${isStart || isEnd ? '12' : '6'}px ${color}80;
+      box-shadow:0 2px ${isStart || isEnd ? '8' : '4'}px ${color}60;
     "></div>`,
     iconSize: [size + 4, size + 4],
     iconAnchor: [(size + 4) / 2, (size + 4) / 2],
@@ -104,8 +104,9 @@ const SmartMap: React.FC<SmartMapProps> = ({ route, allNodes }) => {
       >
         <MapInitializer />
         <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          maxZoom={19}
         />
 
         {/* All road segments with traffic colors */}
@@ -121,29 +122,28 @@ const SmartMap: React.FC<SmartMapProps> = ({ route, allNodes }) => {
               {/* Glow */}
               <Polyline
                 positions={positions}
-                pathOptions={{ color, weight: 10, opacity: 0.15, lineJoin: 'round', lineCap: 'round' }}
+                pathOptions={{ color, weight: 10, opacity: 0.12, lineJoin: 'round', lineCap: 'round' }}
               />
               {/* Road */}
               <Polyline
                 positions={positions}
-                pathOptions={{ color, weight: 4, opacity: 0.7, lineJoin: 'round', lineCap: 'round' }}
+                pathOptions={{ color, weight: 4, opacity: 0.85, lineJoin: 'round', lineCap: 'round' }}
               >
                 <Tooltip className="traffic-tooltip" sticky>
                   <div style={{ minWidth: 140 }}>
-                    <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 4 }}>
+                    <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 4, color: '#1e293b' }}>
                       {sourceNode?.name} → {targetNode?.name}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
                       <span style={{
                         width: 8, height: 8, borderRadius: '50%', background: color, display: 'inline-block',
-                        boxShadow: `0 0 6px ${color}`
                       }} />
-                      <span style={{ textTransform: 'capitalize', fontWeight: 600 }}>
+                      <span style={{ textTransform: 'capitalize', fontWeight: 600, color: '#334155' }}>
                         {edge.trafficLevel} Traffic
                       </span>
                     </div>
-                    <div style={{ color: '#94a3b8', fontSize: 11 }}>
-                      ETA: <strong style={{ color: '#e2e8f0' }}>{edge.currentTime} min</strong>
+                    <div style={{ color: '#64748b', fontSize: 11 }}>
+                      ETA: <strong style={{ color: '#1e293b' }}>{edge.currentTime} min</strong>
                       &nbsp;·&nbsp;{(edge.distance / 1000).toFixed(1)} km
                     </div>
                   </div>
@@ -185,8 +185,8 @@ const SmartMap: React.FC<SmartMapProps> = ({ route, allNodes }) => {
             >
               <Tooltip direction="top" offset={[0, -8]} className="traffic-tooltip">
                 <div>
-                  <div style={{ fontWeight: 700, fontSize: 13 }}>{node.name}</div>
-                  <div style={{ color: '#94a3b8', fontSize: 11 }}>
+                  <div style={{ fontWeight: 700, fontSize: 13, color: '#1e293b' }}>{node.name}</div>
+                  <div style={{ color: '#64748b', fontSize: 11 }}>
                     {isStart ? '🟢 Origin' : isEnd ? '🔴 Destination' : '📍 Landmark'}
                   </div>
                 </div>
