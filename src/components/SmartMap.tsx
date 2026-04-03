@@ -93,13 +93,13 @@ const SmartMap: React.FC<SmartMapProps> = ({ route, allNodes }) => {
   const routeNodeIds = new Set(route?.path.map(n => n.id) || []);
 
   return (
-    <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
       <MapContainer
         center={center}
         zoom={14}
         scrollWheelZoom={true}
         zoomControl={true}
-        style={{ height: '100%', width: '100%', position: 'absolute', top: 0, left: 0 }}
+        style={{ height: '100%', width: '100%' }}
       >
         <MapInitializer />
         <TileLayer
