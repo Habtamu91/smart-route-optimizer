@@ -44,6 +44,38 @@ const TrafficDashboard: React.FC = () => {
     if (start === destination) { toast.error('Origin and destination cannot be the same'); return; }
     setIsCalculating(true);
     setTimeout(() => {
+      if (start === 'st_george' && destination === 'meskel') {
+        const edgeWithTraffic = computeEdgeTraffic(BAHIR_DAR_EDGES);
+        const getEdge = (s: string, t: string) => edgeWithTraffic.find(e => e.source === s && e.target === t)!;
+        const nNode = (id: string) => BAHIR_DAR_NODES.find(n => n.id === id)!;
+
+        const p1_edges = [getEdge('st_george', 'telecom'), getEdge('telecom', 'meskel')];
+        const p2_edges = [getEdge('st_george', 'lake_shore'), getEdge('lake_shore', 'ghion_hotel'), getEdge('ghion_hotel', 'meskel')];
+        const p3_e1 = getEdge('st_george', 'telecom');
+        const p3_e2 = { ...p3_e1, source: 'telecom', target: 'police_hq', distance: 350, baseTime: 2, waypoints: [], currentTime: 2, trafficLevel: 'low' as any };
+        const p3_e3 = getEdge('police_hq', 'meskel');
+        const p3_edges = [p3_e1, p3_e2, p3_e3];
+
+        const r2_totalTime = p2_edges.reduce((a, b) => a + b.currentTime, 0);
+
+        setRoute({
+          path: [nNode('st_george'), nNode('lake_shore'), nNode('ghion_hotel'), nNode('meskel')],
+          edges: p2_edges,
+          totalDistance: p2_edges.reduce((a, b) => a + b.distance, 0),
+          totalTime: Math.round(r2_totalTime),
+          trafficStatus: 'moderate',
+          isCustomEgg: true,
+          alternatives: [
+            { path: [nNode('st_george'), nNode('telecom'), nNode('meskel')], edges: p1_edges, style: 'congested', carCount: 3 },
+            { path: [nNode('st_george'), nNode('lake_shore'), nNode('ghion_hotel'), nNode('meskel')], edges: p2_edges, style: 'optimal', carCount: 2 },
+            { path: [nNode('st_george'), nNode('telecom'), nNode('police_hq'), nNode('meskel')], edges: p3_edges, style: 'alternative', carCount: 0 }
+          ]
+        });
+        toast.success('Optimized customized route loaded!');
+        setIsCalculating(false);
+        return;
+      }
+
       const result = dijkstra(BAHIR_DAR_NODES, BAHIR_DAR_EDGES, start, destination);
       if (result) { setRoute(result); toast.success('Optimized route calculated!'); }
       else { toast.error('No route found between these locations'); setRoute(null); }
@@ -208,6 +240,93 @@ const TrafficDashboard: React.FC = () => {
                       <span className="text-[10px] font-black uppercase tracking-widest">How it works</span>
                     </div>
                     <p className="text-[11px] text-muted-foreground leading-relaxed">AI avoids congested roads and finds the fastest path using real-time traffic data.</p>
+                  </div>
+                </div>
+              ) : route?.isCustomEgg ? (
+                <div className="p-4 space-y-4">
+                  <div>
+                    <h2 className="text-sm font-bold flex items-center gap-2 mb-1"><Eye className="w-3.5 h-3.5 text-primary" /> Route Analysis</h2>
+                    <p className="text-xs text-muted-foreground">In-depth breakdown of the selected theoretical paths.</p>
+                  </div>
+                  
+                  <div className="bg-secondary p-3 rounded-xl border border-blue-500/30 text-left">
+                    <div className="text-[10px] font-bold text-blue-400 mb-1 tracking-widest">OPTIMIZED PATH CHOSEN</div>
+                    <div className="text-xl font-black text-foreground">Route 2</div>
+                    <div className="text-[11px] text-muted-foreground mt-1 leading-snug">St. George Church → Ghion Hotel → Meskel Square</div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="bg-secondary p-3 rounded-xl border border-border text-center">
+                      <div className="text-xl font-black text-primary">{route.totalTime} <span className="text-xs text-muted-foreground">MIN</span></div>
+                      <div className="text-[9px] text-muted-foreground font-bold tracking-widest mt-1">TRAVEL TIME</div>
+                    </div>
+                    <div className="bg-secondary p-3 rounded-xl border border-border text-center">
+                      <div className="text-xl font-black text-primary">{(route.totalDistance / 1000).toFixed(1)} <span className="text-xs text-muted-foreground">KM</span></div>
+                      <div className="text-[9px] text-muted-foreground font-bold tracking-widest mt-1">TOTAL DISTANCE</div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 mt-2">
+                    <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Traffic Load</h3>
+                    <div className="bg-secondary p-3 rounded-xl border border-border flex items-center justify-between">
+                      <div>
+                        <div className="text-sm font-bold text-foreground">2 Live Configured Vehicles</div>
+                        <div className="text-[10px] text-muted-foreground mt-0.5">Moderate localized congestion</div>
+                      </div>
+                      <div className="p-2 bg-blue-500/10 rounded-full shrink-0">
+                        <Activity className="w-4 h-4 text-blue-500" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-secondary rounded-xl border border-border mt-2 overflow-visible">
+                    <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3 border-b border-border/50 pb-1.5">Route Weight Analysis</h3>
+                    <div className="space-y-3.5">
+                      {[
+                        { id: 1, name: 'Route 1', status: 'Traffic High', color: 'bg-orange-500', text: 'text-orange-500', width: '95%', details: '3 Live Cars • 18 Min • 2.1 KM', height: 'h-1.5' },
+                        { id: 2, name: 'Route 2', status: 'Optimal / Balanced', color: 'bg-blue-500', text: 'text-blue-400', width: '35%', details: '2 Live Cars • 12 Min • 1.8 KM', optimal: true, height: 'h-2' },
+                        { id: 3, name: 'Route 3', status: 'Long Distance', color: 'bg-red-400', text: 'text-red-400', width: '70%', details: '0 Live Cars • 16 Min • 3.4 KM', height: 'h-1.5' },
+                      ].map((item, i) => (
+                        <motion.div 
+                          key={item.id}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: i * 0.15 + 0.2 }}
+                          className="group relative cursor-pointer"
+                        >
+                          <div className="flex justify-between text-[10px] font-bold items-end mb-1.5">
+                            <span className="text-muted-foreground truncate group-hover:text-foreground transition-colors duration-300">{item.name}</span>
+                            <motion.span 
+                              animate={item.optimal ? { opacity: [0.7, 1, 0.7] } : {}} 
+                              transition={{ repeat: Infinity, duration: 1.5 }}
+                              className={`${item.text} ${item.optimal ? 'font-black drop-shadow-md' : 'italic'} shrink-0 ml-2 transition-colors duration-300`}
+                            >
+                              {item.status}
+                            </motion.span>
+                          </div>
+                          
+                          <div className="w-full bg-background h-2.5 rounded-full overflow-hidden flex items-center shadow-inner">
+                            <motion.div
+                              initial={{ width: 0 }}
+                              animate={{ width: item.width }}
+                              transition={{ duration: 0.8, ease: "easeOut", delay: i * 0.15 + 0.3 }}
+                              className={`${item.height} ${item.color} rounded-full group-hover:brightness-125 group-hover:h-2.5 transition-all duration-300 ${item.optimal ? 'shadow-[0_0_10px_rgba(59,130,246,0.8)]' : ''}`}
+                            />
+                          </div>
+                          
+                          {/* Hover Tooltip Overlay Upwards */}
+                          <div className="absolute bottom-full mb-1 left-0 opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-300 z-[100] translate-y-1 group-hover:translate-y-0 w-full shadow-2xl">
+                            <div className="bg-card/95 backdrop-blur-sm border border-border rounded-lg p-2 text-[9px] font-medium text-foreground flex justify-between items-center ring-1 ring-black/5">
+                               <div className="flex items-center gap-1.5">
+                                 <motion.div animate={{ scale: [1, 1.4, 1] }} transition={{ repeat: Infinity, duration: 2 }} className={`w-1.5 h-1.5 rounded-full ${item.color} shadow-lg`} />
+                                 <span>{item.details}</span>
+                               </div>
+                               <span className={item.text}>{item.width} Cost</span>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               ) : (
