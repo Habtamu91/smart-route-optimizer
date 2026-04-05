@@ -66,6 +66,29 @@
   font-family: inherit;
 }
 
+.leaflet-container.leaflet-map--day {
+  background: #f8fafc !important;
+}
+
+.leaflet-container.leaflet-map--day .leaflet-popup-content-wrapper,
+.leaflet-container.leaflet-map--day .traffic-tooltip {
+  background: rgba(255, 255, 255, 0.96) !important;
+  color: #0f172a !important;
+  border-color: rgba(148, 163, 184, 0.3) !important;
+  box-shadow: 0 14px 40px rgba(15, 23, 42, 0.12) !important;
+}
+
+.leaflet-container.leaflet-map--day .leaflet-popup-tip {
+  background: rgba(255, 255, 255, 0.96) !important;
+}
+
+.leaflet-container.leaflet-map--day .leaflet-control-zoom,
+.leaflet-container.leaflet-map--day .leaflet-control-zoom a {
+  background: rgba(255, 255, 255, 0.9) !important;
+  color: #0f172a !important;
+  border-color: rgba(148, 163, 184, 0.3) !important;
+}
+
 .leaflet-popup-content-wrapper {
   background: hsl(222 47% 10%);
   color: hsl(210 40% 96%);
