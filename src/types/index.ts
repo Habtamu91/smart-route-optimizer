@@ -27,4 +27,11 @@ export interface RouteResult {
   totalTime: number;
   trafficStatus: 'light' | 'moderate' | 'heavy';
   edges: EdgeWithTraffic[];
+  isCustomEgg?: boolean;
+  alternatives?: {
+    path: Node[];
+    edges: EdgeWithTraffic[];
+    style: 'optimal' | 'alternative' | 'congested';
+    carCount: number;
+  }[];
 }
