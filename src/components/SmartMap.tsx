@@ -1,10 +1,11 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Polyline, Tooltip, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { Node, RouteResult, EdgeWithTraffic } from '../types/index';
 import { BAHIR_DAR_EDGES } from '../data/bahirdar-graph';
 import { computeEdgeTraffic, getTrafficColor } from '../lib/dijkstra';
+import AnimatedCarMarker from './AnimatedCarMarker';
 
 const createNodeIcon = (isRouteNode: boolean, isStart: boolean, isEnd: boolean) => {
   let color = '#64748b';
@@ -27,6 +28,19 @@ const createNodeIcon = (isRouteNode: boolean, isStart: boolean, isEnd: boolean) 
     iconSize: [size + 4, size + 4],
     iconAnchor: [(size + 4) / 2, (size + 4) / 2],
   });
+};
+
+type MapTheme = 'day' | 'night';
+
+const TILE_LAYERS: Record<MapTheme, { url: string; attribution: string }> = {
+  day: {
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  },
+  night: {
+    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; CARTO',
+  },
 };
 
 const MapInitializer: React.FC = () => {
@@ -79,8 +93,13 @@ interface SmartMapProps {
 }
 
 const SmartMap: React.FC<SmartMapProps> = ({ route, allNodes }) => {
+  const [mapTheme, setMapTheme] = useState<MapTheme>('day');
   const center: [number, number] = [11.5870, 37.3880];
   const allEdgesWithTraffic = computeEdgeTraffic(BAHIR_DAR_EDGES);
+  const tileLayer = TILE_LAYERS[mapTheme];
+  const mapClass = mapTheme === 'day' ? 'leaflet-map--day' : '';
+  const tooltipTextColor = mapTheme === 'night' ? '#f8fafc' : '#0f172a';
+  const tooltipSubtextColor = mapTheme === 'night' ? '#cbd5e1' : '#64748b';
 
   // Deduplicate edges (only show one direction)
   const seenEdges = new Set<string>();
@@ -95,17 +114,29 @@ const SmartMap: React.FC<SmartMapProps> = ({ route, allNodes }) => {
 
   return (
     <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
+      <div className="absolute top-4 right-4 z-[1002] rounded-full border border-border bg-card/85 p-1 shadow-2xl backdrop-blur-md">
+        <button
+          type="button"
+          aria-label={mapTheme === 'day' ? 'Switch to night mode' : 'Switch to day mode'}
+          title={mapTheme === 'day' ? 'Night mode' : 'Day mode'}
+          onClick={() => setMapTheme(mapTheme === 'day' ? 'night' : 'day')}
+          className="flex h-11 w-11 items-center justify-center rounded-full bg-background/90 text-2xl text-foreground transition duration-200 hover:bg-primary hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        >
+          {mapTheme === 'day' ? '🌙' : '☀️'}
+        </button>
+      </div>
       <MapContainer
         center={center}
         zoom={13}
         scrollWheelZoom={true}
         zoomControl={true}
-        style={{ height: '100%', width: '100%' }}
+        className={mapClass}
+        style={{ height: '100%', width: '100%', background: mapTheme === 'day' ? '#f8fafc' : '#0f172a' }}
       >
         <MapInitializer />
         <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url={tileLayer.url}
+          attribution={tileLayer.attribution}
           maxZoom={19}
         />
 
@@ -130,20 +161,20 @@ const SmartMap: React.FC<SmartMapProps> = ({ route, allNodes }) => {
                 pathOptions={{ color, weight: 4, opacity: 0.85, lineJoin: 'round', lineCap: 'round' }}
               >
                 <Tooltip className="traffic-tooltip" sticky>
-                  <div style={{ minWidth: 140 }}>
-                    <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 4, color: '#1e293b' }}>
+                  <div style={{ minWidth: 140, color: tooltipTextColor }}>
+                    <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 4, color: tooltipTextColor }}>
                       {sourceNode?.name} → {targetNode?.name}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
                       <span style={{
                         width: 8, height: 8, borderRadius: '50%', background: color, display: 'inline-block',
                       }} />
-                      <span style={{ textTransform: 'capitalize', fontWeight: 600, color: '#334155' }}>
+                      <span style={{ textTransform: 'capitalize', fontWeight: 600, color: tooltipSubtextColor }}>
                         {edge.trafficLevel} Traffic
                       </span>
                     </div>
-                    <div style={{ color: '#64748b', fontSize: 11 }}>
-                      ETA: <strong style={{ color: '#1e293b' }}>{edge.currentTime} min</strong>
+                    <div style={{ color: tooltipSubtextColor, fontSize: 11 }}>
+                      ETA: <strong style={{ color: tooltipTextColor }}>{edge.currentTime} min</strong>
                       &nbsp;·&nbsp;{(edge.distance / 1000).toFixed(1)} km
                     </div>
                   </div>
@@ -153,23 +184,66 @@ const SmartMap: React.FC<SmartMapProps> = ({ route, allNodes }) => {
           );
         })}
 
-        {/* Optimized route overlay */}
-        {route && route.edges.map((edge, idx) => {
-          const positions = getEdgePositions(edge, allNodes);
-          if (positions.length < 2) return null;
-          return (
-            <React.Fragment key={`route-${idx}`}>
-              <Polyline
-                positions={positions}
-                pathOptions={{ color: '#3b82f6', weight: 14, opacity: 0.2, lineJoin: 'round', lineCap: 'round' }}
-              />
-              <Polyline
-                positions={positions}
-                pathOptions={{ color: '#60a5fa', weight: 5, opacity: 0.9, lineJoin: 'round', lineCap: 'round', dashArray: '12 6' }}
-              />
-            </React.Fragment>
-          );
-        })}
+        {/* Optimized route overlay or Custom Alternates */}
+        {route && route.isCustomEgg && route.alternatives ? (
+          route.alternatives.map((alt, altIdx) => {
+            const allPositions: [number, number][] = [];
+            // Build full path positions for this alternative
+            alt.edges.forEach((edge) => {
+              const positions = getEdgePositions(edge, allNodes);
+              if (allPositions.length === 0) {
+                allPositions.push(...positions);
+              } else {
+                allPositions.push(...positions.slice(1));
+              }
+            });
+
+            const color = alt.style === 'optimal' ? '#3b82f6' : alt.style === 'alternative' ? '#ef4444' : '#94a3b8';
+            const weight = alt.style === 'optimal' ? 8 : 4;
+            const opacity = alt.style === 'congested' ? 0.4 : 0.9;
+            const dashArray = alt.style === 'optimal' ? undefined : '8 6';
+
+            return (
+              <React.Fragment key={`alt-route-${altIdx}`}>
+                <Polyline
+                  positions={allPositions}
+                  pathOptions={{ color, weight: weight + 6, opacity: 0.2, lineJoin: 'round', lineCap: 'round' }}
+                />
+                <Polyline
+                  positions={allPositions}
+                  pathOptions={{ color, weight, opacity, lineJoin: 'round', lineCap: 'round', dashArray }}
+                />
+                {/* Spawn animated cars along this path */}
+                {Array.from({ length: alt.carCount }).map((_, carIdx) => (
+                  <AnimatedCarMarker
+                    key={`car-${altIdx}-${carIdx}`}
+                    positions={allPositions}
+                    color={color}
+                    delay={(10000 / alt.carCount) * carIdx} // space out cars
+                    duration={10000} // configurable
+                  />
+                ))}
+              </React.Fragment>
+            );
+          })
+        ) : (
+          route && route.edges.map((edge, idx) => {
+            const positions = getEdgePositions(edge, allNodes);
+            if (positions.length < 2) return null;
+            return (
+              <React.Fragment key={`route-${idx}`}>
+                <Polyline
+                  positions={positions}
+                  pathOptions={{ color: '#3b82f6', weight: 14, opacity: 0.2, lineJoin: 'round', lineCap: 'round' }}
+                />
+                <Polyline
+                  positions={positions}
+                  pathOptions={{ color: '#60a5fa', weight: 5, opacity: 0.9, lineJoin: 'round', lineCap: 'round', dashArray: '12 6' }}
+                />
+              </React.Fragment>
+            );
+          })
+        )}
 
         {/* Node markers */}
         {allNodes.map((node) => {
@@ -185,8 +259,8 @@ const SmartMap: React.FC<SmartMapProps> = ({ route, allNodes }) => {
             >
               <Tooltip direction="top" offset={[0, -8]} className="traffic-tooltip">
                 <div>
-                  <div style={{ fontWeight: 700, fontSize: 13, color: '#1e293b' }}>{node.name}</div>
-                  <div style={{ color: '#64748b', fontSize: 11 }}>
+                  <div style={{ fontWeight: 700, fontSize: 13, color: tooltipTextColor }}>{node.name}</div>
+                  <div style={{ color: tooltipSubtextColor, fontSize: 11 }}>
                     {isStart ? '🟢 Origin' : isEnd ? '🔴 Destination' : '📍 Landmark'}
                   </div>
                 </div>
